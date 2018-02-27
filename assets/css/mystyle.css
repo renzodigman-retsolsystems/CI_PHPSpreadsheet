@@ -1,0 +1,17 @@
+.icon-block {
+  padding: 0 15px;
+}
+.icon-block .material-icons {
+	font-size: inherit;
+}
+
+.cursor {
+    cursor: pointer;
+}
+.cmd-text {
+    overflow:visible;
+    height:400px;
+    font-size:10px;
+    background-color: #000;
+    color:#fff;
+}
