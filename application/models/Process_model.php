@@ -4,7 +4,7 @@
              $this->load->database();
         }
 
-        public function getAccountHeader($account_id){
+        public function getAccountHeader($account_id) {
           $sql = "
             select * from account_headers where account_id = ".$account_id."
           ";
@@ -19,19 +19,7 @@
           }
         }
 
-        public function checkTableNotExist($table_name){
-
-          $table_not_exists = $this->db->table_exists($table_name);
-
-          if($table_not_exists == 1){
-            return false;
-          } else{
-            return true;
-          }
-
-        }
-
-        public function checkTableTrans($account_header, $transactions){
+        public function checkTableTrans($account_header, $transactions) {
 
             $account_id = $account_header[0]['account_id'];
             $year = $transactions['year'];
@@ -39,15 +27,15 @@
 
             $table_name = $account_id."_transaction_".$year.$month;
 
-            $table_not_exists = $this->checkTableNotExist($table_name);
+            $table_not_exists = $this->common_model->checkTableNotExist($table_name);
 
-            if($table_not_exists){
+            if($table_not_exists) {
               $sql = "
                   CREATE TABLE IF NOT EXISTS `".$table_name."` (
                   `transactionid` INT(11) NOT NULL AUTO_INCREMENT,"
                   ;
 
-              foreach($account_header as $column_name => $value){
+              foreach($account_header as $column_name => $value) {
 
                 $sql .= "
                   `".
@@ -70,11 +58,37 @@
 
         }
 
-        public function insertTrans($transactions, $table_name) {
+        public function insertTrans($entry, $table_name) {
 
-          $this->db->insert($table_name, $transactions);
+          $sql = "INSERT INTO `".$table_name."` (
+          `year`, `month`, `storecode`, `skucode`, `quantity`, `retailsale`, `noofdayswithsales`, `percent`, `avgquantityperday`, `avgsalesperday`
+          )";
 
-          return ($this->db->affected_rows() != 1) ? false : true;
+          $sql .= "VALUES ";
+
+          foreach($entry as $column_name) {
+            $sql .= "(";
+
+            foreach ($column_name as $value) {
+
+              $sql .= "'".$value."',";
+
+            }
+            $sql = rtrim($sql, ",");
+
+            $sql .= "),";
+          }
+          $sql = rtrim($sql, ",");
+
+          $result = $this->db->query($sql);
+
+          $result = ($result = true) ? $result : mysql_error($sql, $this->db);
+
+          return $result;
+
+//          $this->db->insert($table_name, $entry);
+
+//          return ($this->db->affected_rows() != 1) ? false : true;
         }
 
         public function getAccountDet($account_id = "", $username = "") {

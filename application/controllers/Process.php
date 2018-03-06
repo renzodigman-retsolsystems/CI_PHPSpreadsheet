@@ -28,6 +28,7 @@ class Process extends CI_Controller {
 
 		$html_append = '';
 		$prog_bar = 0;
+		$type = 0;
 
 		if (isset($_FILES['file']['name'])) {
 			if (0 < $_FILES['file']['error']) {
@@ -60,13 +61,13 @@ class Process extends CI_Controller {
 						$column = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col);
 						$header_check .=  "'" . $xls_data[1][$column] . "',";
 					}
-					$header_check .= "'') and account_id = '$account_id';";
+					$header_check .= "'') and account_id = '$account_id' and type = ".$type.";";
 
 					$checkHeaders = $this->common_model->boolNoCommitQuery($header_check);
 					if ($checkHeaders) {
-
+						$array = array();
+						$html_append .= "<br>";
 						for($row=2; $row <= $highestRow; $row++) {
-							$html_append .=  "<br>";
 							$rowArray = array();
 							for($col=1; $col <= $highestCol; $col++) {
 								$column = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col);
@@ -74,9 +75,12 @@ class Process extends CI_Controller {
 								$cellArray = array($xls_data[1][$column] => $xls_data[$row][$column]);
 								$rowArray = array_merge($rowArray, $cellArray);
 							}
-							$account_header = $this->process_model->getAccountHeader($account_id);
+							$account_header = $this->common_model->getAccountHeader($account_id, $type);
 							$table_name = $this->process_model->checkTableTrans($account_header, $rowArray);
-							$insert_success = $this->process_model->insertTrans($rowArray, $table_name);
+							array_push($array, $rowArray);
+							$prog_bar = (int) ((($row-1)/($highestRow-1)) * 100);
+//							$insert_success = $this->common_model->insertEntry($rowArray, $table_name);
+/*
 							if($insert_success) {
 								$html_append .= 'Inserted Row Successfully ('.($row-1).'/'.($highestRow-1).')';
 								$prog_bar = (int) ((($row-1)/($highestRow-1)) * 100);
@@ -84,7 +88,18 @@ class Process extends CI_Controller {
 							else {
 								$html_append .= 'Inserted Row Failed ('.($row-1).'/'.($highestRow-1).')';
 							}
+*/
 						}
+
+						$insert_success = $this->process_model->insertTrans($array, $table_name);
+
+						if($insert_success) {
+							$html_append .= 'Inserted Data Successfull';
+						}
+						else {
+							$html_append .= 'Insert Data Unsuccessful';
+						}
+
 					} else {
 						$html_append = "Invalid File Headers. Please try again.";
 					}
@@ -101,7 +116,6 @@ class Process extends CI_Controller {
 		if (empty($s['status'])) { show_404(); }
 		else { if ($s['status'] != 1) { show_404(); }}
 
-		$data2 = "";
 		if (!empty($this->input->get('acct'))) {
 
 			$accountName = $this->input->get('acct');
@@ -133,10 +147,10 @@ class Process extends CI_Controller {
 												<input type="hidden" name="account_id" id="account_id" value="' . $getAccDetails['account_id'] . '">
 												<input type="hidden" name="account_desc" id="account_desc" value="' . $getAccDetails['description'] . '">
 												<input type="file" name="file" id="file" style="display:none;">
-												<label class="btn indigo darker-5" for="file"><b>Upload a File</b></label>
 												<div class="progress">
 													<div id="progress-bar" style="width: 0%" class="determinate"></div>
 												</div>
+												<label class="btn indigo darker-5" for="file"><b>Upload a File</b></label>
 											</form>
 										</div>
 									</div>

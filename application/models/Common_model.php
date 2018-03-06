@@ -36,6 +36,40 @@
             }
         }
 
+        public function getAccountHeader($account_id, $type) {
+          $sql = "
+            select * from account_headers where account_id = ".$account_id." and type = ".$type."
+          ";
+
+          $query = $this->db->query($sql);
+          $results = $query->result_array();
+
+          if ($results) {
+              return $results;
+          } else {
+              return false;
+          }
+        }
+
+        public function checkTableNotExist($table_name) {
+
+          $table_not_exists = $this->db->table_exists($table_name);
+
+          if($table_not_exists == 1){
+            return false;
+          } else{
+            return true;
+          }
+
+        }
+
+        public function insertEntry($entry, $table_name) {
+
+          $this->db->insert($table_name, $entry);
+
+          return ($this->db->affected_rows() != 1) ? false : true;
+        }
+
         public function drop_account_month($account = null, $month = null, $year = null) {
 
             $sql = "
